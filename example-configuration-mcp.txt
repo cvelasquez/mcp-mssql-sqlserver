@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "sqlserver": {
+      "command": "node",
+      "args": ["C:\\mcp-sqlserver\\index.js"],
+      "env": {
+        "MSSQL_SERVER": "localhost",
+        "MSSQL_DATABASE": "TuBaseDeDatos",
+        "MSSQL_USER": "tu_usuario",
+        "MSSQL_PASSWORD": "tu_password",
+        "MSSQL_PORT": "1433",
+        "MSSQL_ENCRYPT": "false",
+        "MSSQL_TRUST_CERT": "true"
+      }
+    }
+  }
+}
