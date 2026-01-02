@@ -1,19 +1,44 @@
 {
   "name": "mcp-sqlserver",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "MCP Server for SQL Server with centralized multi-connection management, hot-reload capabilities, and comprehensive database analysis tools",
   "type": "module",
   "main": "index.js",
   "bin": {
     "mcp-sqlserver": "./index.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "sql-server",
+    "database",
+    "claude",
+    "anthropic",
+    "mssql",
+    "database-tools",
+    "sql-analysis",
+    "connection-management"
+  ],
+  "author": {
+    "name": "Christian Vela",
+    "email": "tu-email@example.com"
+  },
   "license": "ISC",
-  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tu-usuario/mcp-sqlserver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tu-usuario/mcp-sqlserver/issues"
+  },
+  "homepage": "https://github.com/tu-usuario/mcp-sqlserver#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.19.1",
     "mssql": "^12.0.0"

@@ -1,0 +1,52 @@
+{
+  "connections": [
+    {
+      "name": "local-dev",
+      "connectionGroup": "Development",
+      "description": "Base de datos local de desarrollo",
+      "server": "localhost",
+      "database": "MyDatabase",
+      "user": "sa",
+      "password": "YourPassword",
+      "port": 1433,
+      "encrypt": false,
+      "trustServerCertificate": true
+    },
+    {
+      "name": "cliente-produccion",
+      "connectionGroup": "ClienteNombre",
+      "description": "Base de datos producción - Sede Principal",
+      "server": "192.168.1.10\\SQLEXPRESS",
+      "database": "ClienteDB_Prod",
+      "user": "app_user",
+      "password": "SecurePassword123",
+      "port": 1433,
+      "encrypt": true,
+      "trustServerCertificate": false
+    },
+    {
+      "name": "cliente-qa",
+      "connectionGroup": "ClienteNombre",
+      "description": "Ambiente QA - Pruebas",
+      "server": "192.168.1.11",
+      "database": "ClienteDB_QA",
+      "user": "qa_user",
+      "password": "QAPassword123",
+      "port": 1433,
+      "encrypt": false,
+      "trustServerCertificate": true
+    },
+    {
+      "name": "analytics-warehouse",
+      "connectionGroup": "Analytics",
+      "description": "Data Warehouse para reportes y análisis",
+      "server": "datawarehouse.company.com",
+      "database": "DWH_Main",
+      "user": "analytics_reader",
+      "password": "AnalyticsPass123",
+      "port": 1433,
+      "encrypt": true,
+      "trustServerCertificate": true
+    }
+  ]
+}
