@@ -1,64 +1,53 @@
 # MCP SQL Server
 
-Servidor MCP (Model Context Protocol) para interactuar con múltiples instancias de SQL Server desde Claude Desktop.
+MCP (Model Context Protocol) server for interacting with multiple SQL Server instances from AI agents like Claude Desktop, ChatGPT, GitHub Copilot, Google Gemini, and other MCP-compatible AI assistants.
 
-## Versión 2.0 - Características
+## Version 2.1 - Features
 
-- **Múltiples conexiones centralizadas**: Todas las conexiones definidas en `connections.json`
-- **Agrupación por cliente**: Organiza conexiones por `connectionGroup`
-- **Descripciones detalladas**: Cada conexión incluye una descripción para identificar propósito/sede
-- **Metadata en respuestas**: Todas las operaciones incluyen información de la conexión utilizada
-- **Recarga en caliente**: Actualiza conexiones sin reiniciar Claude Desktop con `reload_connections`
-- **Pool de conexiones**: Reutilización eficiente de conexiones activas
-- **Planes de ejecución**: Análisis detallado de rendimiento de queries
-- **Análisis de stored procedures**: Obtención y análisis de definiciones de SPs
+- **Centralized multiple connections**: All connections defined in `connections.json`
+- **Client grouping**: Organize connections by `connectionGroup`
+- **Detailed descriptions**: Each connection includes a description to identify purpose/location
+- **Metadata in responses**: All operations include information about the connection used
+- **Hot-reload**: Update connections without restarting your AI agent using `reload_connections`
+- **Connection pooling**: Efficient reuse of active connections
+- **Execution plans**: Detailed query performance analysis
+- **Stored procedure analysis**: Retrieve and analyze SP definitions
+- **Web UI with auto-save**: Visual management interface with automatic file saving
 
-## Instalación
+## Installation
 
 ```bash
 cd C:\mcp-sqlserver
 npm install
 ```
 
-## Configuración
+## Configuration
 
-### 1. Archivo connections.json
+### 1. connections.json File
 
-Define todas tus conexiones en el archivo `connections.json`:
+Define all your connections in the `connections.json` file:
 
 ```json
 {
   "connections": [
     {
-      "name": "minsur-raura",
-      "connectionGroup": "Minsur",
-      "description": "Base de datos sede Raura",
+      "name": "production-main",
+      "connectionGroup": "Production",
+      "description": "Main production database",
       "server": "192.168.1.10\\SQLEXPRESS",
-      "database": "Minsur_Raura",
+      "database": "ProductionDB",
       "user": "sa",
-      "password": "tu_password",
+      "password": "your_password",
       "port": 1433,
       "encrypt": false,
       "trustServerCertificate": true
     },
     {
-      "name": "minsur-sanrafael",
-      "connectionGroup": "Minsur",
-      "description": "Base de datos sede San Rafael",
+      "name": "staging-main",
+      "connectionGroup": "Staging",
+      "description": "Staging environment database",
       "server": "192.168.1.11",
-      "database": "Minsur_SanRafael",
-      "user": "sa",
-      "password": "tu_password",
-      "port": 1433,
-      "encrypt": false,
-      "trustServerCertificate": true
-    },
-    {
-      "name": "yanacocha-cajamarca",
-      "connectionGroup": "Yanacocha",
-      "description": "Sede Cajamarca - Base de datos producción",
-      "server": "10.202.82.15",
-      "database": "Yanacocha_Cajamarca",
+      "database": "StagingDB",
       "user": "app_user",
       "password": "secure_password",
       "port": 1433,
@@ -69,22 +58,23 @@ Define todas tus conexiones en el archivo `connections.json`:
 }
 ```
 
-**Campos de configuración:**
-- `name` (string, requerido): Identificador único de la conexión
-- `connectionGroup` (string, requerido): Grupo al que pertenece (ej: cliente, proyecto)
-- `description` (string, requerido): Descripción detallada de la conexión
-- `server` (string, requerido): Servidor SQL Server (puede incluir instancia)
-- `database` (string, requerido): Nombre de la base de datos
-- `user` (string, requerido): Usuario de SQL Server
-- `password` (string, requerido): Contraseña
-- `port` (number, requerido): Puerto (generalmente 1433)
-- `encrypt` (boolean, requerido): Encriptar la conexión
-- `trustServerCertificate` (boolean, requerido): Confiar en certificado del servidor
+**Configuration fields:**
+- `name` (string, required): Unique connection identifier
+- `connectionGroup` (string, required): Group it belongs to (e.g., client, project, environment)
+- `description` (string, required): Detailed connection description
+- `server` (string, required): SQL Server (can include instance name)
+- `database` (string, required): Database name
+- `user` (string, required): SQL Server user
+- `password` (string, required): Password
+- `port` (number, required): Port (usually 1433)
+- `encrypt` (boolean, required): Encrypt the connection
+- `trustServerCertificate` (boolean, required): Trust server certificate
 
-### 2. Claude Desktop Config
+### 2. MCP Configuration
 
-En tu archivo `claude_desktop_config.json`, solo necesitas agregar una vez el MCP:
+Add the MCP server to your AI agent's configuration file:
 
+**For Claude Desktop** (`claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
@@ -96,385 +86,403 @@ En tu archivo `claude_desktop_config.json`, solo necesitas agregar una vez el MC
 }
 ```
 
-**¡Importante!** Ya no necesitas crear una entrada separada por cada conexión. Todas se gestionan desde `connections.json`.
+**For other MCP-compatible AI agents:**
+Follow your specific agent's MCP configuration instructions and point to `index.js`.
 
-## Herramientas disponibles
+**Important!** You only need one MCP entry. All connections are managed from `connections.json`.
+
+### 3. Web UI (Optional) 🎨
+
+Includes a simple web interface to visually edit the `connections.json` file without manual editing.
+
+**Location:** `C:\mcp-sqlserver\connections.html`
+
+**Features:**
+- ✅ No installation, no build, no dependencies
+- ✅ **Auto-load** connections.json if in the same folder
+- ✅ Visual connection editing (add, edit, **duplicate**, delete)
+- ✅ **Drag & drop** connections between groups
+- ✅ **Smart group selector** (prevents typos)
+- ✅ Automatic grouping by `connectionGroup`
+- ✅ Real-time form validation
+- ✅ **Auto-save** with File System Access API (Chrome/Edge 86+)
+- ✅ Complete **English** interface
+- ✅ Download modified connections.json file
+- ✅ **Completely optional**: The MCP works perfectly without the UI
+
+**Quick usage:**
+1. Open `C:\mcp-sqlserver\connections.html` in your browser
+2. **File auto-loads** if in the same folder, or click "Load connections.json"
+3. Edit connections visually:
+   - Duplicate connections with the copy button
+   - Drag cards between groups to reorganize
+   - Select existing groups or create new ones
+4. With auto-save: Changes save automatically (Chrome/Edge 86+)
+5. Without auto-save: Download the modified file and replace
+6. In your AI agent: `"Reload SQL Server connections"`
+
+**More information:** See [connections-README.md](connections-README.md)
+
+---
+
+## Available Tools
 
 ### 1. list_connections
-Lista todas las conexiones disponibles agrupadas por `connectionGroup`.
+Lists all available connections grouped by `connectionGroup`.
 
-**Parámetros:** Ninguno
+**Parameters:** None
 
-**Ejemplo de uso en Claude:**
+**Example usage:**
 ```
-Lista todas las conexiones SQL Server disponibles
+List all available SQL Server connections
 ```
 
-**Respuesta:**
+**Response:**
 ```
 Available SQL Server Connections:
 
-Minsur:
-  - minsur-raura
-    Description: Base de datos sede Raura
+Production:
+  - production-main
+    Description: Main production database
     Server: 192.168.1.10\SQLEXPRESS
-    Database: Minsur_Raura
+    Database: ProductionDB
 
-  - minsur-sanrafael
-    Description: Base de datos sede San Rafael
+Staging:
+  - staging-main
+    Description: Staging environment database
     Server: 192.168.1.11
-    Database: Minsur_SanRafael
-
-Yanacocha:
-  - yanacocha-cajamarca
-    Description: Sede Cajamarca - Base de datos producción
-    Server: 10.202.82.15
-    Database: Yanacocha_Cajamarca
+    Database: StagingDB
 ```
 
 ---
 
-### 2. reload_connections ⚡ NUEVO
-Recarga el archivo `connections.json` sin necesidad de reiniciar Claude Desktop. Cierra automáticamente los pools de conexión obsoletos y carga la nueva configuración.
+### 2. reload_connections ⚡
+Reloads the `connections.json` file without restarting your AI agent. Automatically closes obsolete connection pools and loads new configuration.
 
-**Parámetros:** Ninguno
+**Parameters:** None
 
-**Ejemplo de uso en Claude:**
+**Example usage:**
 ```
-Recarga las conexiones de SQL Server
+Reload SQL Server connections
 ```
 
-**Respuesta:**
+**Response:**
 ```json
 {
   "success": true,
   "message": "Connections reloaded successfully",
-  "totalConnections": 8,
+  "totalConnections": 5,
   "closedPools": 2,
   "connectionNames": [
-    "minsur-raura",
-    "minsur-sanrafael",
-    "yanacocha-cajamarca",
+    "production-main",
+    "staging-main",
     ...
   ]
 }
 ```
 
-**Casos de uso:**
-- Agregar nuevas conexiones sin interrumpir el trabajo
-- Modificar credenciales o configuración de conexiones existentes
-- Eliminar conexiones obsoletas
-- Actualizar descripciones o grupos de conexiones
+**Use cases:**
+- Add new connections without interrupting work
+- Modify credentials or connection configuration
+- Remove obsolete connections
+- Update descriptions or connection groups
 
 ---
 
 ### 3. query
-Ejecuta una consulta SQL y retorna los resultados con metadata de la conexión.
+Executes a SQL query and returns results with connection metadata.
 
-**Parámetros:**
-- `connection` (string, requerido): Nombre de la conexión a usar
-- `sql` (string, requerido): Consulta SQL a ejecutar
+**Parameters:**
+- `connection` (string, required): Connection name to use
+- `sql` (string, required): SQL query to execute
 
-**Ejemplo de uso en Claude:**
+**Example usage:**
 ```
-Usa la conexión minsur-raura y ejecuta:
-SELECT TOP 10 * FROM Employees WHERE Department = 'Ventas'
+Use the production-main connection and execute:
+SELECT TOP 10 * FROM Employees WHERE Department = 'Sales'
 ```
 
-**Respuesta incluye:**
-- Metadata de la conexión (grupo, descripción, servidor, base de datos)
-- Datos resultantes de la consulta
-- Número de filas afectadas
+**Response includes:**
+- Connection metadata (group, description, server, database)
+- Query result data
+- Number of affected rows
 
 ---
 
 ### 4. get_schema
-Obtiene el esquema completo de una tabla o de toda la base de datos.
+Gets complete schema of a table or entire database.
 
-**Parámetros:**
-- `connection` (string, requerido): Nombre de la conexión
-- `table` (string, opcional): Nombre de la tabla específica
+**Parameters:**
+- `connection` (string, required): Connection name
+- `table` (string, optional): Specific table name
 
-**Ejemplo de uso en Claude:**
+**Example usage:**
 ```
-Muéstrame el esquema completo de la tabla Employees en la conexión minsur-raura
+Show me the complete schema of the Employees table in the production-main connection
 ```
 
-**Retorna:**
-- Nombre de columnas
-- Tipos de datos
-- Longitud máxima de caracteres
-- Si acepta nulos
-- Valores por defecto
+**Returns:**
+- Column names
+- Data types
+- Maximum character length
+- Nullable status
+- Default values
 
 ---
 
 ### 5. get_indexes
-Obtiene información detallada de los índices de una tabla.
+Gets detailed index information for a table.
 
-**Parámetros:**
-- `connection` (string, requerido): Nombre de la conexión
-- `table` (string, requerido): Nombre de la tabla
+**Parameters:**
+- `connection` (string, required): Connection name
+- `table` (string, required): Table name
 
-**Ejemplo de uso en Claude:**
+**Example usage:**
 ```
-¿Qué índices tiene la tabla Orders en minsur-sanrafael?
+What indexes does the Orders table have in staging-main?
 ```
 
-**Retorna:**
-- Nombre del índice
-- Tipo (CLUSTERED, NONCLUSTERED, etc.)
-- Columnas incluidas
-- Columnas INCLUDE
+**Returns:**
+- Index name
+- Type (CLUSTERED, NONCLUSTERED, etc.)
+- Included columns
+- INCLUDE columns
 
 ---
 
 ### 6. get_execution_plan
-Obtiene el plan de ejecución XML de una consulta para análisis de rendimiento.
+Gets XML execution plan of a query for performance analysis.
 
-**Parámetros:**
-- `connection` (string, requerido): Nombre de la conexión
-- `sql` (string, requerido): Consulta SQL a analizar
+**Parameters:**
+- `connection` (string, required): Connection name
+- `sql` (string, required): SQL query to analyze
 
-**Ejemplo de uso en Claude:**
+**Example usage:**
 ```
-Analiza el plan de ejecución de esta consulta en minsur-raura:
-SELECT o.*, c.CustomerName 
-FROM Orders o 
+Analyze the execution plan of this query in production-main:
+SELECT o.*, c.CustomerName
+FROM Orders o
 JOIN Customers c ON o.CustomerId = c.Id
 WHERE o.OrderDate > '2024-01-01'
 ```
 
-**Retorna:**
-- Plan de ejecución en formato XML
-- Información sobre operaciones (scans, seeks, joins)
-- Costos estimados
-- Missing indexes sugeridos por SQL Server
-- Warnings de rendimiento
+**Returns:**
+- Execution plan in XML format
+- Information about operations (scans, seeks, joins)
+- Estimated costs
+- Missing indexes suggested by SQL Server
+- Performance warnings
 
-**Análisis que puedes pedirle a Claude:**
-- Identificar table scans y recomendar índices
-- Detectar operaciones costosas
-- Sugerir optimizaciones de queries
-- Comparar planes de ejecución de diferentes versiones de una query
+**Analysis you can request:**
+- Identify table scans and recommend indexes
+- Detect expensive operations
+- Suggest query optimizations
+- Compare execution plans of different query versions
 
 ---
 
 ### 7. get_stored_procedure
-Obtiene la definición completa de un procedimiento almacenado.
+Gets the complete definition of a stored procedure.
 
-**Parámetros:**
-- `connection` (string, requerido): Nombre de la conexión
-- `name` (string, requerido): Nombre del procedimiento almacenado
+**Parameters:**
+- `connection` (string, required): Connection name
+- `name` (string, required): Stored procedure name
 
-**Ejemplo de uso en Claude:**
+**Example usage:**
 ```
-Usa la conexión de Minsur Raura y muéstrame el código del procedimiento sp_CalcularNomina
+Use the production-main connection and show me the code for sp_CalculatePayroll
 ```
 
-**Retorna:**
-- Código completo del procedimiento almacenado
-- Parámetros
-- Lógica implementada
+**Returns:**
+- Complete stored procedure code
+- Parameters
+- Implemented logic
 
-**Análisis que puedes pedirle a Claude:**
-- Revisar y sugerir mejoras al código
-- Identificar problemas de rendimiento
-- Documentar la lógica del procedimiento
-- Detectar posibles bugs o code smells
+**Analysis you can request:**
+- Review and suggest code improvements
+- Identify performance issues
+- Document procedure logic
+- Detect possible bugs or code smells
 
 ---
 
-## Formato de respuestas
+## Response Format
 
-Todas las herramientas (excepto `list_connections` y `reload_connections`) incluyen metadata completa en sus respuestas:
+All tools (except `list_connections` and `reload_connections`) include complete metadata in their responses:
 
 ```json
 {
   "metadata": {
-    "connection": "minsur-raura",
-    "connectionGroup": "Minsur",
-    "description": "Base de datos sede Raura",
+    "connection": "production-main",
+    "connectionGroup": "Production",
+    "description": "Main production database",
     "server": "192.168.1.10\\SQLEXPRESS",
-    "database": "Minsur_Raura"
+    "database": "ProductionDB"
   },
-  "data": [
-    // ... resultados de la consulta
-  ],
+  "data": [...],
   "rowsAffected": 10
 }
 ```
 
-Esta metadata te permite:
-- Confirmar qué conexión se utilizó
-- Identificar el grupo al que pertenece
-- Verificar servidor y base de datos consultada
-- Tener contexto completo en conversaciones largas
+This metadata allows you to:
+- Confirm which connection was used
+- Identify the group it belongs to
+- Verify queried server and database
+- Have complete context in long conversations
 
 ---
 
-## Casos de uso avanzados con Claude
+## Advanced Use Cases
 
-### Ejemplo 1: Análisis y optimización de procedimientos almacenados
+### Example 1: Stored Procedure Analysis and Optimization
 ```
-Usa el MCP de SQL Server de Minsur, con la conexión a su base de datos de Raura, 
-y analiza qué mejoras podemos hacer al procedimiento almacenado sp_CalcularHorasExtras.
-Revisa el código, identifica posibles problemas de rendimiento y sugiere optimizaciones.
-```
-
-### Ejemplo 2: Comparación de esquemas entre sedes
-```
-Compara el esquema de la tabla Employees entre las conexiones minsur-raura y 
-minsur-sanrafael. Identifica diferencias en columnas, tipos de datos e índices.
+Use the production SQL Server MCP connection and analyze what improvements
+we can make to the sp_CalculateOvertimeHours stored procedure. Review the
+code, identify potential performance issues, and suggest optimizations.
 ```
 
-### Ejemplo 3: Análisis de rendimiento de queries
+### Example 2: Schema Comparison Between Environments
 ```
-En la conexión yanacocha-cajamarca, analiza el plan de ejecución de esta query:
+Compare the Employees table schema between the production-main and
+staging-main connections. Identify differences in columns, data types, and indexes.
+```
+
+### Example 3: Query Performance Analysis
+```
+In the production-main connection, analyze the execution plan of this query:
 SELECT * FROM Orders WHERE Status = 'Pending' AND OrderDate > '2024-01-01'
 
-Identifica si hay table scans, sugiere índices faltantes y optimizaciones.
+Identify table scans, suggest missing indexes, and optimizations.
 ```
 
-### Ejemplo 4: Auditoría de índices
+### Example 4: Index Audit
 ```
-Usando la conexión minsur-raura, lista todas las tablas que no tienen índices 
-o que solo tienen clustered index. Sugiere qué índices adicionales deberíamos crear.
-```
-
-### Ejemplo 5: Análisis de dependencias
-```
-En minsur-sanrafael, identifica qué tablas son referenciadas por la tabla Orders 
-a través de foreign keys, y muestra el esquema completo de cada una.
+Using the production-main connection, list all tables that have no indexes
+or only have a clustered index. Suggest what additional indexes we should create.
 ```
 
-### Ejemplo 6: Workflow completo de agregar una conexión
+### Example 5: Complete Workflow - Add a Connection
 ```
-1. [Editas connections.json y agregas la nueva conexión]
-2. "Recarga las conexiones de SQL Server"
-3. "Lista las conexiones disponibles"
-4. "Usa la nueva conexión y ejecuta SELECT TOP 5 * FROM SystemInfo"
+1. [Edit connections.json and add the new connection]
+2. "Reload SQL Server connections"
+3. "List available connections"
+4. "Use the new connection and execute SELECT TOP 5 * FROM SystemInfo"
 ```
 
 ---
 
-## Gestión de conexiones
+## Connection Management
 
-### Agregar una nueva conexión (Workflow recomendado)
+### Add a New Connection (Recommended Workflow)
 
-1. Edita el archivo `connections.json`
-2. Agrega la nueva conexión al array:
+1. Edit the `connections.json` file
+2. Add the new connection to the array:
 
 ```json
 {
-  "name": "yanacocha-arequipa",
-  "connectionGroup": "Yanacocha",
-  "description": "Sede Arequipa - Base de datos operaciones",
-  "server": "10.202.82.20",
-  "database": "Yanacocha_Arequipa",
-  "user": "app_user",
-  "password": "secure_password",
+  "name": "dev-environment",
+  "connectionGroup": "Development",
+  "description": "Development environment - Testing database",
+  "server": "localhost",
+  "database": "DevDB",
+  "user": "dev_user",
+  "password": "dev_password",
   "port": 1433,
   "encrypt": false,
   "trustServerCertificate": true
 }
 ```
 
-3. En Claude, ejecuta: `"Recarga las conexiones de SQL Server"`
-4. Verifica con: `"Lista todas las conexiones disponibles"`
-5. ¡Listo! La nueva conexión está disponible inmediatamente
+3. In your AI agent, execute: `"Reload SQL Server connections"`
+4. Verify with: `"List all available connections"`
+5. Done! The new connection is immediately available
 
-### Modificar una conexión existente
+### Modify an Existing Connection
 
-1. Edita los campos necesarios en `connections.json`
-2. Ejecuta en Claude: `"Recarga las conexiones de SQL Server"`
-3. Las conexiones activas se cerrarán y recargarán automáticamente
+1. Edit the necessary fields in `connections.json`
+2. Execute in your AI agent: `"Reload SQL Server connections"`
+3. Active connections will close and reload automatically
 
-### Eliminar una conexión
+### Delete a Connection
 
-1. Elimina la entrada del array en `connections.json`
-2. Ejecuta en Claude: `"Recarga las conexiones de SQL Server"`
-3. El pool de conexión se cerrará automáticamente
+1. Remove the entry from the array in `connections.json`
+2. Execute in your AI agent: `"Reload SQL Server connections"`
+3. The connection pool will close automatically
 
 ---
 
-## Solución de problemas
+## Troubleshooting
 
 ### Error: Connection 'xxx' not found
-**Causa:** El nombre de la conexión no existe en `connections.json` o está mal escrito.
+**Cause:** Connection name doesn't exist in `connections.json` or is misspelled.
 
-**Solución:**
-1. Ejecuta `"Lista todas las conexiones disponibles"` para ver los nombres exactos
-2. Verifica que el nombre en `connections.json` coincida exactamente (case-sensitive)
-3. Si acabas de agregar la conexión, ejecuta `"Recarga las conexiones"`
+**Solution:**
+1. Execute `"List all available connections"` to see exact names
+2. Verify name in `connections.json` matches exactly (case-sensitive)
+3. If you just added the connection, execute `"Reload connections"`
 
-### Error de conexión a SQL Server
-**Posibles causas:**
-- Credenciales incorrectas
-- Servidor o instancia mal configurada
-- Puerto incorrecto
-- Firewall bloqueando la conexión
-- SQL Server no permite conexiones remotas
+### SQL Server Connection Error
+**Possible causes:**
+- Incorrect credentials
+- Server or instance misconfigured
+- Incorrect port
+- Firewall blocking connection
+- SQL Server doesn't allow remote connections
 
-**Diagnóstico:**
-1. Verifica credenciales (server, user, password, database)
-2. Prueba conectividad: `ping [servidor]` y `telnet [servidor] [puerto]`
-3. Verifica que SQL Server permita autenticación SQL Server (no solo Windows)
-4. Revisa logs de SQL Server para más detalles
-5. Verifica que el usuario tenga permisos en la base de datos
+**Diagnosis:**
+1. Verify credentials (server, user, password, database)
+2. Test connectivity: `ping [server]` and `telnet [server] [port]`
+3. Verify SQL Server allows SQL Server authentication (not just Windows)
+4. Check SQL Server logs for more details
+5. Verify user has permissions on the database
 
-### Claude no encuentra el MCP
-**Solución:**
-1. Verifica la ruta absoluta en `claude_desktop_config.json`
-2. Asegúrate de que `node` esté instalado y en tu PATH
-3. Reinicia Claude Desktop completamente (cierra todas las ventanas)
-4. Revisa que el archivo `index.js` exista en la ruta especificada
-5. Prueba ejecutar manualmente: `node C:\mcp-sqlserver\index.js`
+### AI Agent Doesn't Find MCP
+**Solution:**
+1. Verify absolute path in your agent's config file
+2. Ensure `node` is installed and in your PATH
+3. Restart your AI agent completely (close all windows)
+4. Verify `index.js` file exists at the specified path
+5. Test manual execution: `node C:\mcp-sqlserver\index.js`
 
-### Error al recargar conexiones
-**Causa:** Archivo `connections.json` con formato JSON inválido.
+### Error Reloading Connections
+**Cause:** `connections.json` file with invalid JSON format.
 
-**Solución:**
-1. Valida el JSON en https://jsonlint.com/
-2. Verifica que todas las comas estén correctas
-3. Verifica que no falten o sobren llaves `{}`
-4. Verifica que todas las cadenas estén entre comillas dobles `"`
-
-### Pool de conexión no se cierra
-**Solución:**
-- El comando `reload_connections` cierra automáticamente todos los pools
-- Si persiste el problema, reinicia Claude Desktop
+**Solution:**
+1. Validate JSON at https://jsonlint.com/
+2. Verify all commas are correct
+3. Verify no missing or extra braces `{}`
+4. Verify all strings are in double quotes `"`
 
 ---
 
-## Seguridad
+## Security
 
-⚠️ **Importante**: El archivo `connections.json` contiene contraseñas en texto plano. 
+⚠️ **Important**: The `connections.json` file contains passwords in plain text.
 
-### Recomendaciones de seguridad:
+### Security Recommendations:
 
-1. **Control de versiones:**
-   - ❌ **NO subas** `connections.json` a repositorios públicos
-   - ✅ Agrega `connections.json` a tu `.gitignore`
-   - ✅ Usa un archivo `connections.template.json` con valores de ejemplo
+1. **Version control:**
+   - ❌ **DO NOT upload** `connections.json` to public repositories
+   - ✅ Add `connections.json` to your `.gitignore`
+   - ✅ Use a `connections.template.json` file with example values
 
-2. **Permisos de archivo:**
-   - Restringe permisos de lectura solo al usuario necesario
-   - En Windows: `icacls connections.json /inheritance:r /grant:r "%USERNAME%:F"`
-   - En Linux/Mac: `chmod 600 connections.json`
+2. **File permissions:**
+   - Restrict read permissions to necessary user only
+   - Windows: `icacls connections.json /inheritance:r /grant:r "%USERNAME%:F"`
+   - Linux/Mac: `chmod 600 connections.json`
 
-3. **Credenciales:**
-   - Usa usuarios de SQL Server con permisos mínimos necesarios
-   - No uses cuentas `sa` en producción
-   - Considera usar autenticación integrada de Windows cuando sea posible
-   - Rota passwords periódicamente
+3. **Credentials:**
+   - Use SQL Server users with minimum necessary permissions
+   - Don't use `sa` accounts in production
+   - Consider using Windows integrated authentication when possible
+   - Rotate passwords periodically
 
-4. **Producción:**
-   - Considera usar Azure Key Vault o similar para secretos
-   - Implementa variables de entorno en lugar de texto plano
-   - Usa conexiones encriptadas (`encrypt: true`)
+4. **Production:**
+   - Consider using Azure Key Vault or similar for secrets
+   - Implement environment variables instead of plain text
+   - Use encrypted connections (`encrypt: true`)
 
-### Ejemplo de .gitignore
+### Example .gitignore
 
 ```gitignore
 # MCP SQL Server
@@ -485,23 +493,23 @@ node_modules/
 
 ---
 
-## Migración desde versión 1.0
+## Migration from Version 1.0
 
-Si venías usando la versión anterior con múltiples entradas en `claude_desktop_config.json`:
+If you were using the previous version with multiple entries in your AI agent's config file:
 
-### Paso 1: Crear connections.json
-Convierte tus conexiones del formato antiguo:
+### Step 1: Create connections.json
+Convert your connections from old format:
 
-**Formato antiguo (claude_desktop_config.json):**
+**Old format (agent config):**
 ```json
 {
   "mcpServers": {
-    "sqlserver-minsur-raura": {
+    "sqlserver-prod": {
       "command": "node",
       "args": ["C:\\mcp-sqlserver\\index.js"],
       "env": {
         "SQL_SERVER": "192.168.1.10\\SQLEXPRESS",
-        "SQL_DATABASE": "Minsur_Raura",
+        "SQL_DATABASE": "ProductionDB",
         ...
       }
     }
@@ -509,24 +517,24 @@ Convierte tus conexiones del formato antiguo:
 }
 ```
 
-**Formato nuevo (connections.json):**
+**New format (connections.json):**
 ```json
 {
   "connections": [
     {
-      "name": "minsur-raura",
-      "connectionGroup": "Minsur",
-      "description": "Base de datos sede Raura",
+      "name": "production-main",
+      "connectionGroup": "Production",
+      "description": "Main production database",
       "server": "192.168.1.10\\SQLEXPRESS",
-      "database": "Minsur_Raura",
+      "database": "ProductionDB",
       ...
     }
   ]
 }
 ```
 
-### Paso 2: Actualizar claude_desktop_config.json
-Reemplaza todas las entradas `sqlserver-xxx` con una única entrada:
+### Step 2: Update Agent Configuration
+Replace all `sqlserver-xxx` entries with a single entry:
 
 ```json
 {
@@ -539,109 +547,140 @@ Reemplaza todas las entradas `sqlserver-xxx` con una única entrada:
 }
 ```
 
-### Paso 3: Reiniciar Claude Desktop
-Cierra completamente Claude Desktop y vuelve a abrirlo.
+### Step 3: Restart Your AI Agent
+Completely close and reopen your AI agent.
 
-### Paso 4: Verificar
-Ejecuta en Claude: `"Lista todas las conexiones SQL Server disponibles"`
+### Step 4: Verify
+Execute: `"List all available SQL Server connections"`
 
 ---
 
-## Desarrollo y pruebas
+## Development and Testing
 
-### Estructura del proyecto
+### Project Structure
 
 ```
 mcp-sqlserver/
-├── index.js                      # Servidor MCP principal
-├── connections.json              # Configuración de conexiones
-├── connections.template.json     # Template de ejemplo
-├── package.json                  # Dependencias npm
-├── README.md                     # Este archivo
-├── CHANGELOG.md                  # Historial de cambios
-└── .gitignore                    # Archivos a ignorar en git
+├── index.js                      # Main MCP server
+├── connections.json              # Connection configuration
+├── connections.template.json     # Example template
+├── connections.html              # Web UI with auto-save
+├── connections-README.md         # Web UI documentation
+├── package.json                  # npm dependencies
+├── README.md                     # This file
+├── CHANGELOG.md                  # Change history
+├── CLAUDE.md                     # Claude Code guidance
+└── .gitignore                    # Ignored files
 ```
 
-### Ejecutar pruebas manuales
+### Manual Testing
 
 ```bash
-# Verificar sintaxis
+# Verify syntax
 node index.js
 
-# Ver logs en Claude Desktop
+# View logs in Claude Desktop
 # Windows: %APPDATA%\Claude\logs
 # Mac: ~/Library/Logs/Claude
 # Linux: ~/.config/Claude/logs
 ```
 
-### Contribuir
+### Contributing
 
-Las contribuciones son bienvenidas. Por favor:
+Contributions are welcome. Please:
 
-1. Fork el repositorio
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+1. Fork the repository
+2. Create a branch for your feature (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
 ## Roadmap
 
-### Versión 2.1 (Planeada)
-- [ ] Soporte para autenticación integrada de Windows
-- [ ] Exportar resultados a CSV/Excel
-- [ ] Backup de esquemas de base de datos
-- [ ] Comparación automática de esquemas entre conexiones
+### Version 2.2 (Planned)
+- [ ] Windows integrated authentication support
+- [ ] Export query results to CSV/Excel
+- [ ] Automatic database schema backup
+- [ ] Command to compare schemas between connections
+- [ ] Explicit transaction support
+- [ ] Query execution history
 
-### Versión 3.0 (Futuro)
-- [ ] Soporte para Azure SQL Database
-- [ ] Integración con variables de entorno
-- [ ] Interfaz web para gestión de conexiones
-- [ ] Métricas y monitoreo de uso
+### Version 3.0 (Future)
+- [ ] Azure SQL Database support
+- [ ] Azure Key Vault integration for credentials
+- [ ] Usage metrics and monitoring
+- [ ] Support for other database types (PostgreSQL, MySQL)
+- [ ] Query result caching
+- [ ] Custom plugin system
 
 ---
 
-## Licencia
+## License
 
 ISC
 
 ---
 
-## Autor
+## Author
 
 Christian V. - @cvelasquez
 
-### Contacto y Soporte
+### Contact and Support
 
 - **Issues:** [GitHub Issues](https://github.com/cvelasquez/mcp-sqlserver/issues)
-- **Documentación:** [Wiki del proyecto](https://github.com/cvelasquez/mcp-sqlserver/wiki)
+- **Documentation:** [Project Wiki](https://github.com/cvelasquez/mcp-sqlserver/wiki)
 
 ---
 
 ## Changelog
 
+### v2.1.0 (2026-01-14)
+- ✨ **NEW:** Web UI with auto-save functionality (File System Access API)
+- ✨ **NEW:** Floating persistent notifications for save status
+- ✨ **NEW:** Auto-load connections.json from root directory
+- ✨ **NEW:** Duplicate connection button
+- ✨ **NEW:** Drag & drop connections between groups
+- ✨ **NEW:** Smart connection group selector with autocomplete
+- 🟢 **NEW:** Green notification when auto-save enabled
+- 🟠 **NEW:** Orange warning when manual save required
+- 🌐 **IMPROVED:** Complete English translation
+- 🎨 **IMPROVED:** Visual feedback when dragging
+- 🎨 **IMPROVED:** Reorganized button layout
+- 📝 **IMPROVED:** Better UX for group management
+- 🔧 **IMPROVED:** Generalized for multiple AI agents (Claude, ChatGPT, Gemini, Copilot, etc.)
+
 ### v2.0.0 (2026-01-01)
-- ✨ **NUEVO:** Comando `reload_connections` para recargar configuración sin reiniciar
-- ✨ **NUEVO:** Campo `connectionGroup` para agrupar conexiones por cliente
-- ✨ **NUEVO:** Campo `description` para identificar propósito de cada conexión
-- ✨ **NUEVO:** Comando `get_execution_plan` para análisis de rendimiento
-- ✨ **NUEVO:** Metadata incluida en todas las respuestas
-- 🔧 Archivo `connections.json` centralizado
-- 🔧 Pool de conexiones optimizado
-- 📝 Documentación completa actualizada
+- ✨ **NEW:** `reload_connections` command for hot-reload without restart
+- ✨ **NEW:** `connectionGroup` field for organizing connections
+- ✨ **NEW:** `description` field for each connection
+- ✨ **NEW:** `get_execution_plan` command for performance analysis
+- ✨ **NEW:** Metadata included in all responses
+- 🔧 Centralized `connections.json` file
+- 🔧 Optimized connection pooling
+- 📝 Complete documentation update
 
 ### v1.0.0 (2025-12-15)
-- 🎉 Release inicial
-- ✅ Comandos básicos: query, get_schema, get_indexes, get_stored_procedure
-- ✅ Soporte para múltiples conexiones
+- 🎉 Initial release
+- ✅ Basic commands: query, get_schema, get_indexes, get_stored_procedure
+- ✅ Multiple connection support
 
 ---
 
-**¿Listo para empezar?** 🚀
+## Compatible AI Agents
 
-1. Configura tu `connections.json`
-2. Actualiza `claude_desktop_config.json`  
-3. Reinicia Claude Desktop
-4. Ejecuta: `"Lista todas las conexiones SQL Server disponibles"`
-5. ¡Disfruta trabajando con SQL Server desde Claude!
+This MCP server works with any MCP-compatible AI agent, including:
+- 🤖 **Claude Desktop** (Anthropic)
+- 🤖 **ChatGPT** with MCP support
+- 🤖 **GitHub Copilot** with MCP integration
+- 🤖 **Google Gemini** with MCP support
+- 🤖 Any other AI agent that implements the Model Context Protocol
+
+**Ready to start?** 🚀
+
+1. Configure your `connections.json`
+2. Update your AI agent's MCP configuration
+3. Restart your AI agent
+4. Execute: `"List all available SQL Server connections"`
+5. Enjoy working with SQL Server from your AI assistant!

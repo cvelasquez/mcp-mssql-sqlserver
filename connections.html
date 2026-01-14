@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Server Connections Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .connection-card {
+            transition: all 0.2s ease;
+            cursor: move;
+        }
+        .connection-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .connection-card.dragging {
+            opacity: 0.5;
+        }
+        .connection-group.drag-over {
+            background-color: #e0f2fe;
+            border: 2px dashed #0284c7;
+        }
+        .auto-save-indicator {
+            transition: opacity 0.3s ease;
+        }
+        .persistent-notification {
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">SQL Server Connections Manager</h1>
+                    <p class="text-blue-100 mt-1">Manage your connections visually</p>
+                </div>
+                <div id="autoSaveIndicator" class="auto-save-indicator opacity-0 bg-green-500 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Auto-saved</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container mx-auto px-4 py-8">
+
+        <!-- Actions Bar -->
+        <div class="bg-white rounded-lg shadow-md p-4 mb-6 flex gap-4 items-center">
+            <input type="file" id="fileInput" accept=".json" class="hidden">
+
+            <!-- Left side: New Connection -->
+            <button onclick="addNewConnection()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                </svg>
+                New Connection
+            </button>
+
+            <!-- Right side: Load and Download -->
+            <div class="ml-auto flex gap-4">
+                <button onclick="loadFile()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                    Load connections.json
+                </button>
+
+                <button onclick="downloadJson()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2" id="downloadBtn" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                    </svg>
+                    Download connections.json
+                </button>
+            </div>
+        </div>
+
+        <!-- Connections List -->
+        <div id="connectionsList" class="space-y-6">
+            <div class="text-center text-gray-500 py-12">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                </svg>
+                <p class="text-xl">No connections loaded</p>
+                <p class="text-sm mt-2">Load a connections.json file or create a new connection</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Edit/Create Connection -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="bg-blue-600 text-white p-4 rounded-t-lg flex justify-between items-center">
+                <h2 id="modalTitle" class="text-xl font-bold">New Connection</h2>
+                <button onclick="closeModal()" class="text-white hover:text-gray-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <form id="connectionForm" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Connection Name *</label>
+                    <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="minsur-raura">
+                    <p class="text-xs text-gray-500 mt-1">Only letters, numbers, hyphens and underscores</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Connection Group *</label>
+                    <div class="relative">
+                        <input
+                            type="text"
+                            name="connectionGroup"
+                            id="connectionGroupInput"
+                            required
+                            list="connectionGroupsList"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Select existing or type new group name">
+                        <datalist id="connectionGroupsList"></datalist>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Select from existing groups or create a new one</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                    <input type="text" name="description" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Main office database">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Server *</label>
+                        <input type="text" name="server" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="localhost or 192.168.1.10\SQLEXPRESS">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Database *</label>
+                        <input type="text" name="database" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="MyDatabase">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">User *</label>
+                        <input type="text" name="user" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="sa">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                        <div class="relative">
+                            <input type="password" name="password" id="passwordField" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10" placeholder="••••••••">
+                            <button type="button" onclick="togglePassword()" class="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700">
+                                <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                    <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Port *</label>
+                    <input type="number" name="port" required value="1433" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="flex items-center">
+                        <input type="checkbox" name="encrypt" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">Encrypt connection</span>
+                    </label>
+
+                    <label class="flex items-center">
+                        <input type="checkbox" name="trustServerCertificate" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 h-4 w-4">
+                        <span class="ml-2 text-sm text-gray-700">Trust server certificate</span>
+                    </label>
+                </div>
+
+                <div class="flex gap-3 pt-4 border-t">
+                    <button type="button" onclick="closeModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let connections = { connections: [] };
+        let editingIndex = -1;
+        let fileHandle = null; // For File System Access API
+        let autoSaveEnabled = false;
+
+        // Auto-load connections.json on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            autoLoadConnectionsFile();
+        });
+
+        // Try to auto-load connections.json from the same directory
+        async function autoLoadConnectionsFile() {
+            try {
+                // Try different possible locations
+                const possiblePaths = [
+                    'connections.json',
+                    './connections.json',
+                ];
+
+                for (const path of possiblePaths) {
+                    try {
+                        const response = await fetch(path);
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (data.connections && Array.isArray(data.connections)) {
+                                connections = data;
+                                renderConnections();
+                                document.getElementById('downloadBtn').disabled = false;
+                                showNotification('connections.json loaded automatically', 'success');
+                                console.log('Auto-loaded from:', path);
+                                return; // Success, exit
+                            }
+                        }
+                    } catch (e) {
+                        // Try next path
+                        continue;
+                    }
+                }
+
+                // If we get here, auto-load failed
+                console.log('Auto-load failed: connections.json not found or CORS blocked. Use "Load connections.json" button.');
+            } catch (error) {
+                console.log('Auto-load error:', error.message);
+            }
+        }
+
+        // Check if File System Access API is supported
+        function isFileSystemAccessSupported() {
+            return 'showOpenFilePicker' in window;
+        }
+
+        // Load file with File System Access API
+        async function loadFile() {
+            if (isFileSystemAccessSupported()) {
+                try {
+                    const [handle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'JSON Files',
+                            accept: { 'application/json': ['.json'] }
+                        }],
+                        multiple: false
+                    });
+
+                    // Request write permission
+                    const permission = await handle.requestPermission({ mode: 'readwrite' });
+
+                    if (permission === 'granted') {
+                        fileHandle = handle;
+                        autoSaveEnabled = true;
+
+                        // Read the file
+                        const file = await handle.getFile();
+                        const text = await file.text();
+                        connections = JSON.parse(text);
+
+                        if (!connections.connections || !Array.isArray(connections.connections)) {
+                            throw new Error('Invalid format');
+                        }
+
+                        renderConnections();
+                        document.getElementById('downloadBtn').disabled = false;
+                        showPersistentNotification('Auto-save enabled! All changes will be saved automatically to connections.json', 'success');
+                        showAutoSaveIndicator();
+                    } else {
+                        // Fallback to regular file input
+                        loadFileFallback();
+                    }
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.error('Error loading file:', error);
+                        showNotification('Error loading file: ' + error.message, 'error');
+                    }
+                }
+            } else {
+                // Fallback for browsers that don't support File System Access API
+                loadFileFallback();
+            }
+        }
+
+        // Fallback file loading method
+        function loadFileFallback() {
+            document.getElementById('fileInput').click();
+        }
+
+        // Traditional file input handler (fallback)
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            autoSaveEnabled = false;
+            fileHandle = null;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    connections = JSON.parse(e.target.result);
+                    if (!connections.connections || !Array.isArray(connections.connections)) {
+                        throw new Error('Invalid format');
+                    }
+                    renderConnections();
+                    document.getElementById('downloadBtn').disabled = false;
+                    showPersistentNotification('Auto-save NOT enabled. Remember to click "Download connections.json" to save your changes!', 'warning');
+                } catch (error) {
+                    showNotification('Error loading file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Auto-save function
+        async function autoSaveToFile() {
+            if (!autoSaveEnabled || !fileHandle) {
+                return false;
+            }
+
+            try {
+                const writable = await fileHandle.createWritable();
+                const dataStr = JSON.stringify(connections, null, 2);
+                await writable.write(dataStr);
+                await writable.close();
+
+                showAutoSaveIndicator();
+                return true;
+            } catch (error) {
+                console.error('Auto-save failed:', error);
+                showNotification('Auto-save failed: ' + error.message, 'error');
+                return false;
+            }
+        }
+
+        // Show auto-save indicator
+        function showAutoSaveIndicator() {
+            const indicator = document.getElementById('autoSaveIndicator');
+            indicator.style.opacity = '1';
+
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+            }, 2000);
+        }
+
+        // Show persistent notification (with close button)
+        function showPersistentNotification(message, type = 'info') {
+            // Remove any existing persistent notification
+            const existing = document.querySelector('.persistent-notification');
+            if (existing) {
+                existing.remove();
+            }
+
+            const colors = {
+                success: { bg: 'bg-green-500', icon: 'check' },
+                warning: { bg: 'bg-orange-500', icon: 'exclamation' },
+                info: { bg: 'bg-blue-500', icon: 'info' }
+            };
+
+            const color = colors[type] || colors.info;
+
+            const notification = document.createElement('div');
+            notification.className = `persistent-notification fixed bottom-4 right-4 ${color.bg} text-white px-6 py-4 rounded-lg shadow-lg z-50 max-w-md`;
+
+            notification.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        ${type === 'success' ?
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />' :
+                        type === 'warning' ?
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />' :
+                            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />'}
+                    </svg>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200 ml-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+        }
+
+        // Update connection groups datalist
+        function updateConnectionGroupsDatalist() {
+            const datalist = document.getElementById('connectionGroupsList');
+            const groups = new Set();
+
+            connections.connections.forEach(conn => {
+                groups.add(conn.connectionGroup);
+            });
+
+            datalist.innerHTML = '';
+            Array.from(groups).sort().forEach(group => {
+                const option = document.createElement('option');
+                option.value = group;
+                datalist.appendChild(option);
+            });
+        }
+
+        // Render connections
+        function renderConnections() {
+            const container = document.getElementById('connectionsList');
+
+            if (connections.connections.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-12">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                        </svg>
+                        <p class="text-xl">No connections</p>
+                        <p class="text-sm mt-2">Add a new connection to get started</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Group by connectionGroup
+            const grouped = {};
+            connections.connections.forEach((conn, index) => {
+                if (!grouped[conn.connectionGroup]) {
+                    grouped[conn.connectionGroup] = [];
+                }
+                grouped[conn.connectionGroup].push({ ...conn, index });
+            });
+
+            container.innerHTML = '';
+            Object.keys(grouped).sort().forEach(group => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'connection-group bg-white rounded-lg shadow-md p-6 transition-colors';
+                groupDiv.dataset.group = group;
+
+                groupDiv.innerHTML = `
+                    <h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                        ${group}
+                        <span class="text-sm font-normal text-gray-500">(${grouped[group].length})</span>
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" data-cards-container>
+                        ${grouped[group].map(conn => createConnectionCard(conn)).join('')}
+                    </div>
+                `;
+
+                container.appendChild(groupDiv);
+
+                // Add drag and drop event listeners to the group
+                setupDragAndDrop(groupDiv);
+            });
+        }
+
+        // Setup drag and drop for a group
+        function setupDragAndDrop(groupElement) {
+            groupElement.addEventListener('dragover', handleDragOver);
+            groupElement.addEventListener('drop', handleDrop);
+            groupElement.addEventListener('dragleave', handleDragLeave);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            if (e.currentTarget === e.target) {
+                e.currentTarget.classList.remove('drag-over');
+            }
+        }
+
+        async function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+
+            const cardIndex = parseInt(e.dataTransfer.getData('text/plain'));
+            const targetGroup = e.currentTarget.dataset.group;
+
+            if (connections.connections[cardIndex].connectionGroup !== targetGroup) {
+                connections.connections[cardIndex].connectionGroup = targetGroup;
+                renderConnections();
+                await autoSaveToFile();
+                showNotification(`Connection moved to ${targetGroup}`, 'success');
+            }
+        }
+
+        // Create connection card
+        function createConnectionCard(conn) {
+            return `
+                <div class="connection-card border border-gray-200 rounded-lg p-4 hover:border-blue-500"
+                     draggable="true"
+                     ondragstart="handleDragStart(event, ${conn.index})"
+                     ondragend="handleDragEnd(event)">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-gray-800">${conn.name}</h3>
+                            <p class="text-sm text-gray-600 mt-1">${conn.description}</p>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="editConnection(${conn.index})" class="p-1 text-blue-600 hover:bg-blue-50 rounded" title="Edit">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                </svg>
+                            </button>
+                            <button onclick="duplicateConnection(${conn.index})" class="p-1 text-green-600 hover:bg-green-50 rounded" title="Duplicate">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
+                                    <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
+                                </svg>
+                            </button>
+                            <button onclick="deleteConnection(${conn.index})" class="p-1 text-red-600 hover:bg-red-50 rounded" title="Delete">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-1 text-xs text-gray-600">
+                        <div class="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
+                            </svg>
+                            <span>${conn.server}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z" />
+                                <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z" />
+                                <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z" />
+                            </svg>
+                            <span>${conn.database}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                            </svg>
+                            <span>${conn.user}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Drag and drop handlers
+        function handleDragStart(event, index) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', index);
+            event.currentTarget.classList.add('dragging');
+        }
+
+        function handleDragEnd(event) {
+            event.currentTarget.classList.remove('dragging');
+            document.querySelectorAll('.connection-group').forEach(group => {
+                group.classList.remove('drag-over');
+            });
+        }
+
+        // Add new connection
+        function addNewConnection() {
+            editingIndex = -1;
+            document.getElementById('modalTitle').textContent = 'New Connection';
+            document.getElementById('connectionForm').reset();
+            updateConnectionGroupsDatalist();
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        // Edit connection
+        function editConnection(index) {
+            editingIndex = index;
+            const conn = connections.connections[index];
+            document.getElementById('modalTitle').textContent = 'Edit Connection';
+
+            updateConnectionGroupsDatalist();
+
+            const form = document.getElementById('connectionForm');
+            form.name.value = conn.name;
+            form.connectionGroup.value = conn.connectionGroup;
+            form.description.value = conn.description;
+            form.server.value = conn.server;
+            form.database.value = conn.database;
+            form.user.value = conn.user;
+            form.password.value = conn.password;
+            form.port.value = conn.port;
+            form.encrypt.checked = conn.encrypt;
+            form.trustServerCertificate.checked = conn.trustServerCertificate;
+
+            document.getElementById('modal').classList.remove('hidden');
+        }
+
+        // Duplicate connection
+        async function duplicateConnection(index) {
+            const conn = connections.connections[index];
+            const duplicatedConn = { ...conn };
+
+            // Find a unique name
+            let baseName = conn.name;
+            let copyNumber = 1;
+            let newName = `${baseName}-copy`;
+
+            while (connections.connections.some(c => c.name === newName)) {
+                copyNumber++;
+                newName = `${baseName}-copy${copyNumber}`;
+            }
+
+            duplicatedConn.name = newName;
+            duplicatedConn.description = `${conn.description} (copy)`;
+
+            connections.connections.push(duplicatedConn);
+            renderConnections();
+            document.getElementById('downloadBtn').disabled = false;
+            await autoSaveToFile();
+            showNotification('Connection duplicated successfully', 'success');
+        }
+
+        // Delete connection
+        async function deleteConnection(index) {
+            if (confirm('Are you sure you want to delete this connection?')) {
+                connections.connections.splice(index, 1);
+                renderConnections();
+                await autoSaveToFile();
+                showNotification('Connection deleted', 'success');
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('connectionForm').reset();
+        }
+
+        // Toggle password visibility
+        function togglePassword() {
+            const field = document.getElementById('passwordField');
+            field.type = field.type === 'password' ? 'text' : 'password';
+        }
+
+        // Form submit
+        document.getElementById('connectionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const connection = {
+                name: formData.get('name'),
+                connectionGroup: formData.get('connectionGroup'),
+                description: formData.get('description'),
+                server: formData.get('server'),
+                database: formData.get('database'),
+                user: formData.get('user'),
+                password: formData.get('password'),
+                port: parseInt(formData.get('port')),
+                encrypt: formData.get('encrypt') === 'on',
+                trustServerCertificate: formData.get('trustServerCertificate') === 'on'
+            };
+
+            // Validate name format
+            if (!/^[a-zA-Z0-9_-]+$/.test(connection.name)) {
+                showNotification('Name can only contain letters, numbers, hyphens and underscores', 'error');
+                return;
+            }
+
+            // Check duplicate name (excluding current if editing)
+            const isDuplicate = connections.connections.some((conn, idx) =>
+                conn.name === connection.name && idx !== editingIndex
+            );
+
+            if (isDuplicate) {
+                showNotification('A connection with this name already exists', 'error');
+                return;
+            }
+
+            if (editingIndex >= 0) {
+                connections.connections[editingIndex] = connection;
+                showNotification('Connection updated', 'success');
+            } else {
+                connections.connections.push(connection);
+                showNotification('Connection added', 'success');
+            }
+
+            renderConnections();
+            closeModal();
+            document.getElementById('downloadBtn').disabled = false;
+            await autoSaveToFile();
+        });
+
+        // Download JSON
+        function downloadJson() {
+            const dataStr = JSON.stringify(connections, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'connections.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showNotification('File downloaded successfully', 'success');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            };
+
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.transform = 'translateX(400px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

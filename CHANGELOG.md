@@ -276,9 +276,51 @@ Elimina todas las entradas `sqlserver-xxx` y deja una única entrada:
 
 ---
 
+## [2.1.0] - 2026-01-14
+
+### 🎨 Web UI Improvements
+
+- ✨ **NUEVO:** Interfaz completamente en inglés
+- ✨ **NUEVO:** Auto-carga automática de connections.json si se encuentra en la misma carpeta
+- ✨ **NUEVO:** Botón duplicar conexiones (añade sufijo "-copy" automáticamente)
+- ✨ **NUEVO:** Drag & drop de tarjetas de conexiones entre grupos
+- ✨ **NUEVO:** Selector inteligente de grupos con autocompletado
+- 🔧 Mejora visual con feedback al arrastrar
+- 🔧 Mejor UX al crear/editar conexiones
+- 📝 Documentación completa actualizada en inglés
+
+### 📚 Documentation
+
+- 🌐 **NUEVO:** Toda la documentación traducida al inglés
+- 🤖 **NUEVO:** Referencias generalizadas a "AI agents" (Claude, ChatGPT, Gemini, Copilot)
+- 📝 README.md completamente reescrito en inglés con ejemplos multi-agente
+- 📝 connections-README.md actualizado con información de compatibilidad
+- 📝 CLAUDE.md actualizado con guías de Web UI y auto-save
+
+### 🛠️ Technical Changes
+
+- Implementación de HTML5 Drag and Drop API
+- Uso de datalist para selector de grupos
+- Función autoLoadConnectionsFile() con fetch API
+- File System Access API para auto-guardado
+- Lógica de nombres únicos para duplicados (copy, copy2, copy3...)
+- CSS mejorado para estados de drag (dragging, drag-over)
+- Notificaciones persistentes flotantes con animación slideInRight
+
+### 🤖 AI Agent Compatibility
+
+- Compatible con cualquier agente de IA que soporte MCP:
+  - ✅ Claude Desktop (Anthropic)
+  - ✅ ChatGPT con soporte MCP
+  - ✅ GitHub Copilot con integración MCP
+  - ✅ Google Gemini con soporte MCP
+  - ✅ Cualquier otro agente que implemente Model Context Protocol
+
+---
+
 ## [Unreleased]
 
-### Planeado para v2.1.0
+### Planeado para v2.2.0
 
 - [ ] Soporte para autenticación integrada de Windows
 - [ ] Exportar resultados de queries a CSV/Excel
