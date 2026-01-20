@@ -1,5 +1,11 @@
 # MCP SQL Server
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+[![MCP](https://img.shields.io/badge/MCP-Compatible-blue.svg)](https://modelcontextprotocol.io/)
+[![GitHub Sponsors](https://img.shields.io/github/sponsors/cvelasquez?style=social)](https://github.com/sponsors/cvelasquez)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-support-orange.svg)](https://buymeacoffee.com/cvelasquez)
+
 MCP (Model Context Protocol) server for interacting with multiple SQL Server instances from AI agents like Claude Desktop, ChatGPT, GitHub Copilot, Google Gemini, and other MCP-compatible AI assistants.
 
 ## Version 2.1 - Features

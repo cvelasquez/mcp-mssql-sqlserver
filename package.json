@@ -24,18 +24,18 @@
     "connection-management"
   ],
   "author": {
-    "name": "Christian Vela",
-    "email": "tu-email@example.com"
+    "name": "Christian Velasquez Astucuri",
+    "email": "velasquezoracle@gmail.com"
   },
-  "license": "ISC",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tu-usuario/mcp-sqlserver.git"
+    "url": "https://github.com/cvelasquez/mcp-mssql-sqlserver.git"
   },
   "bugs": {
-    "url": "https://github.com/tu-usuario/mcp-sqlserver/issues"
+    "url": "https://github.com/cvelasquez/mcp-mssql-sqlserver/issues"
   },
-  "homepage": "https://github.com/tu-usuario/mcp-sqlserver#readme",
+  "homepage": "https://github.com/cvelasquez/mcp-mssql-sqlserver#readme",
   "engines": {
     "node": ">=18.0.0"
   },
